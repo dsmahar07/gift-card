@@ -58,11 +58,12 @@ export default async function HomePage({
   const override = typeof resolvedSearchParams.countryCode === 'string' ? resolvedSearchParams.countryCode : undefined;
   const code = (override || userLocation.countryCode).toUpperCase();
   
-  // Add country filter to search params if not already specified
-  const paramsWithLocation = {
+  // Only add country filter if explicitly provided in URL
+  // Otherwise show all countries (for debugging)
+  const paramsWithLocation = override ? {
     ...resolvedSearchParams,
     countryCode: code,
-  };
+  } : resolvedSearchParams;
   
   // Fetch all data in parallel for speed
   const [allGiftCards, categories, brands] = await Promise.all([
