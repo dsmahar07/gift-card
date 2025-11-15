@@ -1,5 +1,5 @@
 import { GiftCardCatalog } from "@/components/gift-card/gift-card-catalog";
-import { getAllGiftCards, getCategories, getBrands } from "@/lib/queries";
+import { getAllGiftCards, getCategories } from "@/lib/queries";
 import type { Metadata } from "next";
 import { HeroSection } from "@/components/sections/hero-section";
 import { BenefitsSection } from "@/components/sections/benefits-section";
@@ -51,10 +51,9 @@ export default async function HomePage({
   const resolvedSearchParams = await searchParams;
   
   // Fetch all data in parallel for speed
-  const [allGiftCards, categories, brands] = await Promise.all([
+  const [allGiftCards, categories] = await Promise.all([
     getAllGiftCards(resolvedSearchParams),
     getCategories(),
-    getBrands(),
   ]);
 
   // Generate structured data for SEO
@@ -86,7 +85,7 @@ export default async function HomePage({
         {/* Main Store Section - Gift Card Catalog */}
         <section className="pt-6 pb-16 sm:pt-8 sm:pb-20 md:pt-10 md:pb-24" style={{ backgroundColor: '#F5F5F7' }}>
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <FilterBar categories={categories} brands={brands} />
+            <FilterBar categories={categories} />
             <GiftCardCatalog 
               initialGiftCards={allGiftCards}
             />

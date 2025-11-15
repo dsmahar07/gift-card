@@ -11,6 +11,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useTransition, useEffect } from "react";
 import * as FancyButton from '@/components/ui/fancy-button';
 import { WalletButton } from "@/components/wallet/wallet-button";
+import { toast } from "sonner";
 
 interface HeaderProps {
   categories?: string[];
@@ -77,6 +78,15 @@ export function Header({ categories = [], brands = [] }: HeaderProps) {
     updateFilters({ brand: value, search, category: selectedCategory });
   };
 
+  const handleCopyCA = async () => {
+    try {
+      await navigator.clipboard.writeText("pump");
+      toast.success("CA copied to clipboard!");
+    } catch (err) {
+      toast.error("Failed to copy");
+    }
+  };
+
   return (
     <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-lg border-b">
       <div className="container mx-auto px-3 sm:px-4 lg:px-6 py-2 sm:py-3">
@@ -97,6 +107,32 @@ export function Header({ categories = [], brands = [] }: HeaderProps) {
                 </span>
               </div>
             </Link>
+
+            {/* CA Copy Button */}
+            <Button
+              onClick={handleCopyCA}
+              variant="outline"
+              size="sm"
+              className="ml-3 gap-1.5 hover:bg-purple-50 hover:border-purple-400 transition-all h-8 px-2.5 sm:px-3 text-xs sm:text-sm"
+            >
+              <span className="font-medium">CA :</span>
+              <span className="text-muted-foreground">...pump</span>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="opacity-60"
+              >
+                <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
+                <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
+              </svg>
+            </Button>
 
             {/* Navigation - Right Side (Mobile) */}
             <nav className="flex md:hidden items-center gap-2 flex-shrink-0">

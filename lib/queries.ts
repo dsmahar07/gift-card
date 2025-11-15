@@ -27,28 +27,6 @@ export const getCategories = unstable_cache(
   { revalidate: 3600, tags: ["categories"] }
 );
 
-// Cache gift card brands
-export const getBrands = unstable_cache(
-  async () => {
-    try {
-      if (!process.env.DATABASE_URL) {
-        return [];
-      }
-      
-      const results = await db
-        .selectDistinct({ brand: giftCards.brand })
-        .from(giftCards);
-
-      return results.map((r) => r.brand).sort();
-    } catch (error) {
-      console.error("Error fetching brands:", error);
-      return [];
-    }
-  },
-  ["giftcard-brands"],
-  { revalidate: 3600, tags: ["brands"] }
-);
-
 // Get all gift cards with filters
 export async function getAllGiftCards(searchParams: { [key: string]: string | string[] | undefined }) {
   try {
@@ -58,11 +36,6 @@ export async function getAllGiftCards(searchParams: { [key: string]: string | st
     }
 
     const conditions = [eq(giftCards.active, true)];
-
-    // Exact brand match from header dropdown (faster than LIKE)
-    if (searchParams.brand) {
-      conditions.push(eq(giftCards.brand, searchParams.brand as string));
-    }
 
     if (searchParams.category) {
       conditions.push(eq(giftCards.category, searchParams.category as string));

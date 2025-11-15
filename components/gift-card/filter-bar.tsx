@@ -9,22 +9,19 @@ import { Search01Icon } from '@hugeicons/core-free-icons';
 
 interface FilterBarProps {
   categories: string[];
-  brands: string[];
 }
 
-export function FilterBar({ categories = [], brands = [] }: FilterBarProps) {
+export function FilterBar({ categories = [] }: FilterBarProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
-  const [selectedBrand, setSelectedBrand] = useState("all");
   const [isPending, startTransition] = useTransition();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setSearch(searchParams.get("search") || "");
     setSelectedCategory(searchParams.get("category") || "all");
-    setSelectedBrand(searchParams.get("brand") || "all");
     setMounted(true);
   }, [searchParams]);
 
@@ -39,7 +36,7 @@ export function FilterBar({ categories = [], brands = [] }: FilterBarProps) {
 
   useEffect(() => {
     if (!mounted) return;
-    const t = setTimeout(() => updateFilters({ search, category: selectedCategory, brand: selectedBrand }), 300);
+    const t = setTimeout(() => updateFilters({ search, category: selectedCategory }), 300);
     return () => clearTimeout(t);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search]);
@@ -60,7 +57,7 @@ export function FilterBar({ categories = [], brands = [] }: FilterBarProps) {
         {/* Filters */}
         <div className="flex gap-2 sm:gap-3">
           {mounted && categories.length > 0 && (
-            <Select value={selectedCategory} onValueChange={(v) => { setSelectedCategory(v); updateFilters({ category: v, search, brand: selectedBrand }); }}>
+            <Select value={selectedCategory} onValueChange={(v) => { setSelectedCategory(v); updateFilters({ category: v, search }); }}>
               <SelectTrigger className="flex-1 sm:w-40 h-10 text-sm bg-white border-gray-200 focus:border-purple-400 focus:ring-purple-400 rounded-lg">
                 <SelectValue placeholder="Category" />
               </SelectTrigger>
@@ -68,19 +65,6 @@ export function FilterBar({ categories = [], brands = [] }: FilterBarProps) {
                 <SelectItem value="all">All Categories</SelectItem>
                 {categories.map((c) => (
                   <SelectItem key={c} value={c}>{c}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-          {mounted && brands.length > 0 && (
-            <Select value={selectedBrand} onValueChange={(v) => { setSelectedBrand(v); updateFilters({ brand: v, search, category: selectedCategory }); }}>
-              <SelectTrigger className="flex-1 sm:w-40 h-10 text-sm bg-white border-gray-200 focus:border-purple-400 focus:ring-purple-400 rounded-lg">
-                <SelectValue placeholder="Brand" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Brands</SelectItem>
-                {brands.map((b) => (
-                  <SelectItem key={b} value={b}>{b}</SelectItem>
                 ))}
               </SelectContent>
             </Select>

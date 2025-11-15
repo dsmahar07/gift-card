@@ -1,6 +1,6 @@
 import { MetadataRoute } from 'next';
 import { SITE_CONFIG } from '@/lib/constants';
-import { getAllGiftCards, getBrands } from '@/lib/queries';
+import { getAllGiftCards } from '@/lib/queries';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = SITE_CONFIG.url;
@@ -16,8 +16,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ];
 
   try {
-    // Get all gift card brands for dynamic pages
-    const brands = await getBrands();
+    // Get all gift cards and extract unique brands
+    const giftCards = await getAllGiftCards({});
+    const brands = [...new Set(giftCards.map(card => card.brand))];
     
     // Add dynamic store pages
     const storePages = brands.map((brand) => {
