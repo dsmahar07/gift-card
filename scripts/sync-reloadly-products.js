@@ -53,12 +53,12 @@ async function getAccessToken() {
   return accessToken;
 }
 
-async function fetchProducts(page = 1, size = 50, countryCode = "US") {
+async function fetchProducts(page = 1, size = 200) {
   const token = await getAccessToken();
   const url = new URL(`${BASE_URL}/products`);
   url.searchParams.append("page", page.toString());
   url.searchParams.append("size", size.toString());
-  url.searchParams.append("countryCode", countryCode);
+  // No countryCode filter - fetch all global products
 
   const response = await fetch(url.toString(), {
     headers: {
@@ -81,95 +81,130 @@ async function syncProducts() {
     await getAccessToken();
     console.log("✅ Authenticated!\n");
 
-    // Get country code from command line args or default to US
-    const countryCode = process.argv[2] || "US";
-    console.log(`📍 Fetching products for country: ${countryCode}\n`);
+    console.log(`📍 Fetching all global gift cards (USD-based only)\n`);
 
-    console.log("📦 Fetching products from Reloadly...");
-    const data = await fetchProducts(1, 20, countryCode); // Get first 20 products
-    
-    if (!data.content || data.content.length === 0) {
-      console.log("⚠️  No products found in Reloadly.");
-      return;
-    }
-
-    console.log(`Found ${data.content.length} products\n`);
-
+    let page = 1;
+    let totalProducts = 0;
     let added = 0;
     let skipped = 0;
+    let hasMore = true;
 
-    for (const product of data.content) {
-      try {
-        // Parse denominations (support fixed or variable range)
-        let denominations = [];
-        if (Array.isArray(product.fixedRecipientDenominations) && product.fixedRecipientDenominations.length > 0) {
-          denominations = product.fixedRecipientDenominations;
-        } else if (product.minRecipientDenomination && product.maxRecipientDenomination) {
-          denominations = [product.minRecipientDenomination, product.maxRecipientDenomination];
-        } else if (Array.isArray(product.fixedSenderDenominations) && product.fixedSenderDenominations.length > 0) {
-          denominations = product.fixedSenderDenominations;
-        } else if (product.minSenderDenomination && product.maxSenderDenomination) {
-          denominations = [product.minSenderDenomination, product.maxSenderDenomination];
-        } else {
-          // Fallback
-          denominations = [10, 100];
+    // Track unique products by brand name to avoid duplicates
+    const processedBrands = new Set();
+
+    while (hasMore) {
+      console.log(`📦 Fetching page ${page}...`);
+      const data = await fetchProducts(page, 200);
+      
+      if (!data.content || data.content.length === 0) {
+        console.log("No more products found.");
+        break;
+      }
+
+      console.log(`Found ${data.content.length} products on page ${page}`);
+      totalProducts += data.content.length;
+
+      for (const product of data.content) {
+        try {
+          // Filter: Only USD-based products (sender currency must be USD)
+          if (product.senderCurrencyCode && product.senderCurrencyCode !== "USD") {
+            skipped++;
+            continue;
+          }
+
+          // Skip if we've already processed this brand to avoid duplicates
+          const brandKey = `${product.brand?.brandName || product.productName}-${product.productId}`;
+          if (processedBrands.has(brandKey)) {
+            skipped++;
+            continue;
+          }
+          processedBrands.add(brandKey);
+
+          // Parse denominations (support fixed or variable range)
+          let denominations = [];
+          
+          // Prefer sender denominations (USD) over recipient
+          if (Array.isArray(product.fixedSenderDenominations) && product.fixedSenderDenominations.length > 0) {
+            denominations = product.fixedSenderDenominations;
+          } else if (product.minSenderDenomination && product.maxSenderDenomination) {
+            denominations = [product.minSenderDenomination, product.maxSenderDenomination];
+          } else if (Array.isArray(product.fixedRecipientDenominations) && product.fixedRecipientDenominations.length > 0) {
+            denominations = product.fixedRecipientDenominations;
+          } else if (product.minRecipientDenomination && product.maxRecipientDenomination) {
+            denominations = [product.minRecipientDenomination, product.maxRecipientDenomination];
+          } else {
+            // Skip products with no denomination info
+            skipped++;
+            continue;
+          }
+
+          // Filter valid denominations (between 10 and 500 USD)
+          denominations = denominations.filter(d => d >= 10 && d <= 500);
+          if (denominations.length === 0) {
+            skipped++;
+            continue;
+          }
+
+          // Get image URL
+          const imageUrl = product.logoUrls?.[0] || "https://via.placeholder.com/300";
+          
+          // Determine category
+          let category = "Gift Cards";
+          if (product.brand?.brandName) {
+            const brandLower = product.brand.brandName.toLowerCase();
+            if (brandLower.includes("gaming") || brandLower.includes("game")) category = "Gaming";
+            else if (brandLower.includes("entertainment") || brandLower.includes("streaming")) category = "Entertainment";
+            else if (brandLower.includes("shopping") || brandLower.includes("retail")) category = "Shopping";
+            else if (brandLower.includes("food") || brandLower.includes("restaurant")) category = "Food & Dining";
+          }
+          
+          await sql`
+            INSERT INTO gift_cards (
+              brand, 
+              name, 
+              image, 
+              category, 
+              denominations, 
+              reloadly_product_id, 
+              active
+            )
+            VALUES (
+              ${product.brand?.brandName || product.productName},
+              ${product.productName},
+              ${imageUrl},
+              ${category},
+              ${JSON.stringify(denominations)},
+              ${product.productId},
+              ${true}
+            )
+            ON CONFLICT (reloadly_product_id) DO UPDATE SET
+              brand = EXCLUDED.brand,
+              name = EXCLUDED.name,
+              image = EXCLUDED.image,
+              category = EXCLUDED.category,
+              denominations = EXCLUDED.denominations,
+              active = EXCLUDED.active,
+              updated_at = NOW()
+          `;
+          
+          console.log(`✓ ${product.productName} (USD ${JSON.stringify(denominations)})`);
+          added++;
+        } catch (error) {
+          console.error(`✗ Error adding ${product.productName}:`, error.message);
+          skipped++;
         }
+      }
 
-        // Get image URL
-        const imageUrl = product.logoUrls?.[0] || "https://via.placeholder.com/300";
-
-        // Extract country information
-        const country = product.country?.name || "United States";
-        const productCountryCode = product.country?.isoName || countryCode;
-        const currency = product.recipientCurrencyCode || product.senderCurrencyCode || "USD";
-        
-        await sql`
-          INSERT INTO gift_cards (
-            brand, 
-            name, 
-            image, 
-            category, 
-            country,
-            country_code,
-            currency,
-            denominations, 
-            reloadly_product_id, 
-            active
-          )
-          VALUES (
-            ${product.brand?.brandName || product.productName},
-            ${product.productName},
-            ${imageUrl},
-            ${product.brand?.brandName ? "Gift Cards" : "General"},
-            ${country},
-            ${productCountryCode},
-            ${currency},
-            ${JSON.stringify(denominations)},
-            ${product.productId},
-            ${true}
-          )
-          ON CONFLICT (reloadly_product_id) DO UPDATE SET
-            brand = EXCLUDED.brand,
-            name = EXCLUDED.name,
-            image = EXCLUDED.image,
-            category = EXCLUDED.category,
-            country = EXCLUDED.country,
-            country_code = EXCLUDED.country_code,
-            currency = EXCLUDED.currency,
-            denominations = EXCLUDED.denominations,
-            active = EXCLUDED.active,
-            updated_at = NOW()
-        `;
-        
-        console.log(`✓ Added/Updated: ${product.productName}`);
-        added++;
-      } catch (error) {
-        console.error(`✗ Error adding ${product.productName}:`, error.message);
-        skipped++;
+      // Check if there are more pages
+      if (data.content.length < 200 || page >= 10) { // Limit to 10 pages max (2000 products)
+        hasMore = false;
+      } else {
+        page++;
       }
     }
 
     console.log(`\n✅ Sync complete!`);
+    console.log(`   Total products fetched: ${totalProducts}`);
     console.log(`   Added/Updated: ${added}`);
     console.log(`   Skipped: ${skipped}`);
     console.log(`\n🎉 Gift cards are now available in your store!`);

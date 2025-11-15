@@ -49,7 +49,7 @@ export const getBrands = unstable_cache(
   { revalidate: 3600, tags: ["brands"] }
 );
 
-// Get all gift cards with filters - OPTIMIZED
+// Get all gift cards with filters
 export async function getAllGiftCards(searchParams: { [key: string]: string | string[] | undefined }) {
   try {
     if (!process.env.DATABASE_URL) {
@@ -58,11 +58,6 @@ export async function getAllGiftCards(searchParams: { [key: string]: string | st
     }
 
     const conditions = [eq(giftCards.active, true)];
-
-    // Filter by country code (most important for location-based filtering)
-    if (searchParams.countryCode) {
-      conditions.push(eq(giftCards.countryCode, searchParams.countryCode as string));
-    }
 
     // Exact brand match from header dropdown (faster than LIKE)
     if (searchParams.brand) {
@@ -87,9 +82,6 @@ export async function getAllGiftCards(searchParams: { [key: string]: string | st
         name: giftCards.name,
         brand: giftCards.brand,
         category: giftCards.category,
-        country: giftCards.country,
-        countryCode: giftCards.countryCode,
-        currency: giftCards.currency,
         image: giftCards.image,
         denominations: giftCards.denominations,
         active: giftCards.active,
@@ -118,8 +110,8 @@ export async function getAllGiftCards(searchParams: { [key: string]: string | st
   }
 }
 
-// Get gift card by brand slug - FAST VERSION
-export async function getGiftCardByBrand(brandSlug: string, countryCode?: string) {
+// Get gift card by brand slug
+export async function getGiftCardByBrand(brandSlug: string) {
   const normalizedSlug = brandSlug
     .toLowerCase()
     .trim()
@@ -127,16 +119,10 @@ export async function getGiftCardByBrand(brandSlug: string, countryCode?: string
     .replace(/(^-|-$)+/g, "");
 
   try {
-    // Filter by active and optional country to avoid cross-country mismatch
-    const conditions = [eq(giftCards.active, true)];
-    if (countryCode) {
-      conditions.push(eq(giftCards.countryCode, countryCode));
-    }
-
     const results = await db
       .select()
       .from(giftCards)
-      .where(sql`${sql.join(conditions, sql` AND `)}`)
+      .where(eq(giftCards.active, true))
       .limit(100);
 
     // Find exact brand match among filtered results
@@ -159,9 +145,6 @@ export async function getGiftCardByBrand(brandSlug: string, countryCode?: string
       ...matchedCard,
       _id: matchedCard.id.toString(),
       category: matchedCard.category ?? undefined,
-      country: matchedCard.country,
-      countryCode: matchedCard.countryCode,
-      currency: matchedCard.currency,
       denominations: options,
       reloadlyProductId: matchedCard.reloadlyProductId,
     };
@@ -192,9 +175,6 @@ export async function getGiftCardById(id: string) {
       ...card,
       _id: card.id.toString(),
       category: card.category ?? undefined,
-      country: card.country,
-      countryCode: card.countryCode,
-      currency: card.currency,
       denominations: options,
       reloadlyProductId: card.reloadlyProductId,
     };
@@ -205,14 +185,11 @@ export async function getGiftCardById(id: string) {
 }
 
 // Get related gift cards
-export async function getRelatedGiftCards(category: string | undefined, currentId: string, limit: number = 4, countryCode?: string) {
+export async function getRelatedGiftCards(category: string | undefined, currentId: string, limit: number = 4) {
   try {
     const conditions = [eq(giftCards.active, true)];
     if (category) {
       conditions.push(eq(giftCards.category, category));
-    }
-    if (countryCode) {
-      conditions.push(eq(giftCards.countryCode, countryCode));
     }
     
     const results = await db
@@ -229,9 +206,6 @@ export async function getRelatedGiftCards(category: string | undefined, currentI
           ...card,
           _id: card.id.toString(),
           category: card.category ?? undefined,
-          country: card.country,
-          countryCode: card.countryCode,
-          currency: card.currency,
           denominations: options,
           reloadlyProductId: card.reloadlyProductId,
         };

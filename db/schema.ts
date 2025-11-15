@@ -6,9 +6,6 @@ export const giftCards = pgTable("gift_cards", {
   name: text("name").notNull(),
   image: text("image").notNull(),
   category: text("category"),
-  country: text("country").notNull().default("United States"),
-  countryCode: text("country_code").notNull().default("US"),
-  currency: text("currency").notNull().default("USD"),
   denominations: text("denominations").notNull(), // JSON array stored as text
   reloadlyProductId: integer("reloadly_product_id").notNull().unique(),
   active: boolean("active").notNull().default(true),

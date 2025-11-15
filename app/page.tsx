@@ -1,6 +1,5 @@
 import { GiftCardCatalog } from "@/components/gift-card/gift-card-catalog";
 import { getAllGiftCards, getCategories, getBrands } from "@/lib/queries";
-import { getUserLocation } from "@/lib/location";
 import type { Metadata } from "next";
 import { HeroSection } from "@/components/sections/hero-section";
 import { BenefitsSection } from "@/components/sections/benefits-section";
@@ -51,23 +50,9 @@ export default async function HomePage({
 }) {
   const resolvedSearchParams = await searchParams;
   
-  // Detect user location
-  const userLocation = await getUserLocation();
-
-  // Allow explicit override via URL (?countryCode=XX)
-  const override = typeof resolvedSearchParams.countryCode === 'string' ? resolvedSearchParams.countryCode : undefined;
-  const code = (override || userLocation.countryCode).toUpperCase();
-  
-  // Only add country filter if explicitly provided in URL
-  // Otherwise show all countries (for debugging)
-  const paramsWithLocation = override ? {
-    ...resolvedSearchParams,
-    countryCode: code,
-  } : resolvedSearchParams;
-  
   // Fetch all data in parallel for speed
   const [allGiftCards, categories, brands] = await Promise.all([
-    getAllGiftCards(paramsWithLocation),
+    getAllGiftCards(resolvedSearchParams),
     getCategories(),
     getBrands(),
   ]);

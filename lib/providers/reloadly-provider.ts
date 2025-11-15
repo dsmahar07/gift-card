@@ -60,7 +60,7 @@ export class ReloadlyProvider extends GiftCardProvider {
         operatorId: params.productId,
         amount: params.amount,
         useLocalAmount: true,
-        countryCode: params.countryCode || "US",
+        countryCode: params.countryCode || "US", // Default to US for USD transactions
         customIdentifier: params.customIdentifier,
         recipientEmail: params.recipientEmail,
       }),

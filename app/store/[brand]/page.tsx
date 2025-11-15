@@ -20,11 +20,6 @@ import { WhyChooseUsSection } from "@/components/sections/why-choose-us-section"
 import { HowItWorks } from "@/components/sections/how-it-works";
 import { DenominationSelector } from "@/components/gift-card/denomination-selector";
 import { SITE_CONFIG } from "@/lib/constants";
-import { getUserLocation } from "@/lib/location";
-
-// This page varies by country, so disable ISR
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
 
 // Generate metadata for SEO
 export async function generateMetadata({
@@ -65,11 +60,7 @@ export default async function GiftCardDetailPage({
   
   // Fallback to brand lookup
   if (!giftCard) {
-    const userLocation = await getUserLocation();
-    // Allow override via query string (?countryCode=XX)
-    const override = typeof resolvedSearchParams.countryCode === 'string' ? resolvedSearchParams.countryCode : undefined;
-    const code = override || userLocation.countryCode;
-    giftCard = await getGiftCardByBrand(brand, code);
+    giftCard = await getGiftCardByBrand(brand);
   }
 
   if (!giftCard) {
@@ -80,8 +71,7 @@ export default async function GiftCardDetailPage({
   const relatedCards = await getRelatedGiftCards(
     giftCard.category,
     giftCard._id,
-    4,
-    giftCard.countryCode
+    4
   ).catch(() => []);
 
   // Generate structured data for SEO
@@ -97,7 +87,7 @@ export default async function GiftCardDetailPage({
     },
     "offers": {
       "@type": "AggregateOffer",
-      "priceCurrency": giftCard.currency || "USD",
+      "priceCurrency": "USD",
       "lowPrice": Math.max(15, Math.min(...giftCard.denominations)).toString(),
       "highPrice": Math.min(150, Math.max(...giftCard.denominations)).toString(),
       "offerCount": giftCard.denominations.length,
@@ -214,7 +204,6 @@ export default async function GiftCardDetailPage({
                 <DenominationSelector 
                   giftCardId={giftCard._id} 
                   denominations={giftCard.denominations}
-                  currency={giftCard.currency}
                 />
               </div>
             </div>

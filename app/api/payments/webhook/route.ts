@@ -89,9 +89,11 @@ export async function POST(request: NextRequest) {
       const giftCard = giftCardResults[0];
 
       // Purchase gift card from Reloadly
+      // Note: All gift cards synced are USD-based. The Reloadly API requires a country code,
+      // and "US" is used since all our products are priced in USD.
       const topupResponse = await purchaseTopup({
         productId: giftCard.reloadlyProductId,
-        countryCode: "US", // Default, can be made configurable
+        countryCode: "US", // USD gift cards
         quantity: 1,
         unitPrice: parseFloat(order.denomination),
         customIdentifier: order.id.toString(),

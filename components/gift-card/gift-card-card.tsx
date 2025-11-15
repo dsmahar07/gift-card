@@ -47,20 +47,14 @@ const getCategoryColor = (category: string) => {
 };
 
 export function GiftCardCard({ giftCard }: GiftCardCardProps) {
-  const minDenomination = Math.min(...giftCard.denominations);
-  const maxDenomination = Math.max(...giftCard.denominations);
+  // All gift cards are USD-based
+  const minDenomination = giftCard.denominations.length > 0 ? Math.min(...giftCard.denominations) : 0;
+  const maxDenomination = giftCard.denominations.length > 0 ? Math.max(...giftCard.denominations) : 0;
   const displayMax = Math.min(maxDenomination, 150);
   const categoryColor = giftCard.category ? getCategoryColor(giftCard.category) : '#007AFF';
   
-  // Format amount with proper currency symbol
-  const formatAmount = (amount: number) => {
-    const currencySymbols: Record<string, string> = {
-      USD: "$", CAD: "CA$", GBP: "£", EUR: "€", AUD: "A$",
-      INR: "₹", BRL: "R$", MXN: "MX$", SGD: "S$", AED: "AED",
-    };
-    const symbol = currencySymbols[giftCard.currency] || giftCard.currency + " ";
-    return `${symbol}${amount}`;
-  };
+  // Format amount in USD
+  const formatAmount = (amount: number) => `$${amount}`;
 
   // Business rule: display "from" amount as at least 15
   const displayMin = Math.max(minDenomination, 15);
@@ -120,7 +114,7 @@ export function GiftCardCard({ giftCard }: GiftCardCardProps) {
           color: '#3C3C43'
         }}
       >
-        {giftCard.country} • Digital Gift Card
+        Digital Gift Card • USD
       </div>
       
       {/* Price/Discount Section */}

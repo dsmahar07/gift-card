@@ -10,11 +10,10 @@ import * as FancyButton from '@/components/ui/fancy-button';
 
 interface DenominationSelectorProps {
   giftCardId: string;
-  denominations: number[];
-  currency?: string;
+  denominations: number[]; // Always in USD
 }
 
-export function DenominationSelector({ giftCardId, denominations, currency = "USD" }: DenominationSelectorProps) {
+export function DenominationSelector({ giftCardId, denominations }: DenominationSelectorProps) {
   const isRange = denominations.length === 2 && denominations[0] !== denominations[1];
   const originalMin = isRange ? Math.min(denominations[0], denominations[1]) : Math.min(...denominations);
   const originalMax = isRange ? Math.max(denominations[0], denominations[1]) : Math.max(...denominations);
@@ -34,15 +33,8 @@ export function DenominationSelector({ giftCardId, denominations, currency = "US
 
   const [selectedDenomination, setSelectedDenomination] = useState<number>(initial);
   
-  // Format amount with proper currency symbol
-  const formatAmount = (amount: number) => {
-    const currencySymbols: Record<string, string> = {
-      USD: "$", CAD: "CA$", GBP: "£", EUR: "€", AUD: "A$",
-      INR: "₹", BRL: "R$", MXN: "MX$", SGD: "S$", AED: "AED",
-    };
-    const symbol = currencySymbols[currency] || currency + " ";
-    return `${symbol}${amount}`;
-  };
+  // Format amount in USD
+  const formatAmount = (amount: number) => `$${amount}`;
 
   return (
     <Card className="border-0 bg-white rounded-xl sm:rounded-2xl rounded-br-2xl sm:rounded-br-3xl rounded-bl-2xl sm:rounded-bl-3xl w-full">
