@@ -1,0 +1,25 @@
+# robots.txt for Giftswap.shop
+
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /admin/
+Disallow: /account/
+Disallow: /_next/
+Disallow: /checkout/
+
+# Sitemap location
+Sitemap: https://giftswap.shop/sitemap.xml
+
+# Crawl delay
+Crawl-delay: 1
+
+# Allow specific search engine bots
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: Slurp
+Allow: /
