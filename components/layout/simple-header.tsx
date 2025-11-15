@@ -58,10 +58,12 @@ export function SimpleHeader() {
                   </>
                 ) : (
                   <SignInButton mode="modal">
-                    <FancyButton.Root variant="destructive" size="small" className="sm:hidden">
-                      Sign In
-                    </FancyButton.Root>
-                    <FancyButton.Root variant="destructive" size="medium" className="hidden sm:inline-flex">
+                    {/* Clerk requires a single child; use one responsive button */}
+                    <FancyButton.Root 
+                      variant="destructive" 
+                      size="medium" 
+                      className="px-3 py-2 text-sm sm:text-base"
+                    >
                       Sign In
                     </FancyButton.Root>
                   </SignInButton>
