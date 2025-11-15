@@ -3,10 +3,9 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import { Suspense } from "react";
 import { Toaster } from "@/components/ui/sonner";
-import { Header } from "@/components/layout/header";
+import { SimpleHeader } from "@/components/layout/simple-header";
 import { Footer } from "@/components/layout/footer";
 import { SolanaWalletProvider } from "@/components/providers/wallet-provider";
-import { getCategories, getBrands } from "@/lib/queries";
 import { SITE_CONFIG } from "@/lib/constants";
 import "./globals.css";
 
@@ -67,11 +66,6 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // Fetch in parallel for speed
-  const [categories, brands] = await Promise.all([
-    getCategories(),
-    getBrands(),
-  ]);
 
   return (
     <ClerkProvider
@@ -97,7 +91,7 @@ export default async function RootLayout({
               <div className="container mx-auto px-3 sm:px-4 lg:px-6 py-2 sm:py-3 h-14" />
             </div>
           }>
-            <Header categories={categories} brands={brands} />
+            <SimpleHeader />
           </Suspense>
           <main className="flex-1">{children}</main>
           <Footer />

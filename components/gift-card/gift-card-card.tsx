@@ -49,7 +49,21 @@ const getCategoryColor = (category: string) => {
 export function GiftCardCard({ giftCard }: GiftCardCardProps) {
   const minDenomination = Math.min(...giftCard.denominations);
   const maxDenomination = Math.max(...giftCard.denominations);
+  const displayMax = Math.min(maxDenomination, 150);
   const categoryColor = giftCard.category ? getCategoryColor(giftCard.category) : '#007AFF';
+  
+  // Format amount with proper currency symbol
+  const formatAmount = (amount: number) => {
+    const currencySymbols: Record<string, string> = {
+      USD: "$", CAD: "CA$", GBP: "£", EUR: "€", AUD: "A$",
+      INR: "₹", BRL: "R$", MXN: "MX$", SGD: "S$", AED: "AED",
+    };
+    const symbol = currencySymbols[giftCard.currency] || giftCard.currency + " ";
+    return `${symbol}${amount}`;
+  };
+
+  // Business rule: display "from" amount as at least 15
+  const displayMin = Math.max(minDenomination, 15);
 
   return (
     <div 
@@ -106,7 +120,7 @@ export function GiftCardCard({ giftCard }: GiftCardCardProps) {
           color: '#3C3C43'
         }}
       >
-        Gift Cards, Digital
+        {giftCard.country} • Digital Gift Card
       </div>
       
       {/* Price/Discount Section */}
@@ -122,8 +136,8 @@ export function GiftCardCard({ giftCard }: GiftCardCardProps) {
           }}
         >
           {minDenomination === maxDenomination 
-            ? `$${minDenomination}` 
-            : `$${minDenomination} - $${maxDenomination}`
+            ? formatAmount(displayMin)
+            : `${formatAmount(displayMin)} - ${formatAmount(displayMax)}`
           }
         </div>
         <div 

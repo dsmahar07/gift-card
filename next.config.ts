@@ -6,6 +6,17 @@ const nextConfig: NextConfig = {
       {
         protocol: "https",
         hostname: "logos-world.net",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "cdn.reloadly.com",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "via.placeholder.com",
+        pathname: "/**",
       },
     ],
   },

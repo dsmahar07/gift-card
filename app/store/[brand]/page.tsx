@@ -20,9 +20,11 @@ import { WhyChooseUsSection } from "@/components/sections/why-choose-us-section"
 import { HowItWorks } from "@/components/sections/how-it-works";
 import { DenominationSelector } from "@/components/gift-card/denomination-selector";
 import { SITE_CONFIG } from "@/lib/constants";
+import { getUserLocation } from "@/lib/location";
 
-// Enable static generation with revalidation for faster loads
-export const revalidate = 3600; // Cache for 1 hour
+// This page varies by country, so disable ISR
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 // Generate metadata for SEO
 export async function generateMetadata({
@@ -63,7 +65,11 @@ export default async function GiftCardDetailPage({
   
   // Fallback to brand lookup
   if (!giftCard) {
-    giftCard = await getGiftCardByBrand(brand);
+    const userLocation = await getUserLocation();
+    // Allow override via query string (?countryCode=XX)
+    const override = typeof resolvedSearchParams.countryCode === 'string' ? resolvedSearchParams.countryCode : undefined;
+    const code = override || userLocation.countryCode;
+    giftCard = await getGiftCardByBrand(brand, code);
   }
 
   if (!giftCard) {
@@ -71,7 +77,12 @@ export default async function GiftCardDetailPage({
   }
 
   // Fetch related cards asynchronously (don't block page render)
-  const relatedCards = await getRelatedGiftCards(giftCard.category, giftCard._id).catch(() => []);
+  const relatedCards = await getRelatedGiftCards(
+    giftCard.category,
+    giftCard._id,
+    4,
+    giftCard.countryCode
+  ).catch(() => []);
 
   // Generate structured data for SEO
   const structuredData = {
@@ -86,9 +97,9 @@ export default async function GiftCardDetailPage({
     },
     "offers": {
       "@type": "AggregateOffer",
-      "priceCurrency": "USD",
-      "lowPrice": Math.min(...giftCard.denominations).toString(),
-      "highPrice": Math.max(...giftCard.denominations).toString(),
+      "priceCurrency": giftCard.currency || "USD",
+      "lowPrice": Math.max(15, Math.min(...giftCard.denominations)).toString(),
+      "highPrice": Math.min(150, Math.max(...giftCard.denominations)).toString(),
       "offerCount": giftCard.denominations.length,
       "availability": "https://schema.org/InStock",
     },
@@ -202,7 +213,8 @@ export default async function GiftCardDetailPage({
               <div className="mt-4 sm:mt-6 -mx-6 sm:-mx-8 -mb-6 sm:-mb-8 w-[calc(100%+3rem)] sm:w-[calc(100%+4rem)]">
                 <DenominationSelector 
                   giftCardId={giftCard._id} 
-                  denominations={giftCard.denominations} 
+                  denominations={giftCard.denominations}
+                  currency={giftCard.currency}
                 />
               </div>
             </div>

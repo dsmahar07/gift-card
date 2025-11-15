@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { giftCards } from "@/db/schema";
 import { eq } from "drizzle-orm";
+import { standardizeDenominations } from "@/utils/denominations";
 
 export async function GET(
   request: NextRequest,
@@ -22,11 +23,14 @@ export async function GET(
       );
     }
 
-    // Parse denominations JSON
+    // Parse denominations JSON and standardize
+    const raw = JSON.parse(giftCard[0].denominations);
+    const { options } = standardizeDenominations(raw);
+
     const result = {
       ...giftCard[0],
       _id: giftCard[0].id.toString(),
-      denominations: JSON.parse(giftCard[0].denominations),
+      denominations: options,
     };
 
     return NextResponse.json(result);

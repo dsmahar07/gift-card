@@ -1,10 +1,12 @@
 import { GiftCardCatalog } from "@/components/gift-card/gift-card-catalog";
 import { getAllGiftCards, getCategories, getBrands } from "@/lib/queries";
+import { getUserLocation } from "@/lib/location";
 import type { Metadata } from "next";
 import { HeroSection } from "@/components/sections/hero-section";
 import { BenefitsSection } from "@/components/sections/benefits-section";
 import { FAQSection } from "@/components/sections/faq-section";
 import { WhyChooseUsSection } from "@/components/sections/why-choose-us-section";
+import { FilterBar } from "@/components/gift-card/filter-bar";
 import { SITE_CONFIG } from "@/lib/constants";
 
 // SEO Metadata for home page
@@ -39,7 +41,8 @@ export const metadata: Metadata = {
   },
 };
 
-export const revalidate = 3600; // Cache for 1 hour
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export default async function HomePage({
   searchParams,
@@ -48,9 +51,22 @@ export default async function HomePage({
 }) {
   const resolvedSearchParams = await searchParams;
   
+  // Detect user location
+  const userLocation = await getUserLocation();
+
+  // Allow explicit override via URL (?countryCode=XX)
+  const override = typeof resolvedSearchParams.countryCode === 'string' ? resolvedSearchParams.countryCode : undefined;
+  const code = (override || userLocation.countryCode).toUpperCase();
+  
+  // Add country filter to search params if not already specified
+  const paramsWithLocation = {
+    ...resolvedSearchParams,
+    countryCode: code,
+  };
+  
   // Fetch all data in parallel for speed
   const [allGiftCards, categories, brands] = await Promise.all([
-    getAllGiftCards(resolvedSearchParams),
+    getAllGiftCards(paramsWithLocation),
     getCategories(),
     getBrands(),
   ]);
@@ -84,6 +100,7 @@ export default async function HomePage({
         {/* Main Store Section - Gift Card Catalog */}
         <section className="pt-6 pb-16 sm:pt-8 sm:pb-20 md:pt-10 md:pb-24" style={{ backgroundColor: '#F5F5F7' }}>
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <FilterBar categories={categories} brands={brands} />
             <GiftCardCatalog 
               initialGiftCards={allGiftCards}
             />

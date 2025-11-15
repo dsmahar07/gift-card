@@ -2,6 +2,7 @@ import { db } from "@/lib/db";
 import { giftCards } from "@/db/schema";
 import { eq, sql } from "drizzle-orm";
 import { unstable_cache } from "next/cache";
+import { standardizeDenominations } from "@/utils/denominations";
 
 // Cache gift card categories
 export const getCategories = unstable_cache(
@@ -58,6 +59,11 @@ export async function getAllGiftCards(searchParams: { [key: string]: string | st
 
     const conditions = [eq(giftCards.active, true)];
 
+    // Filter by country code (most important for location-based filtering)
+    if (searchParams.countryCode) {
+      conditions.push(eq(giftCards.countryCode, searchParams.countryCode as string));
+    }
+
     // Exact brand match from header dropdown (faster than LIKE)
     if (searchParams.brand) {
       conditions.push(eq(giftCards.brand, searchParams.brand as string));
@@ -81,6 +87,9 @@ export async function getAllGiftCards(searchParams: { [key: string]: string | st
         name: giftCards.name,
         brand: giftCards.brand,
         category: giftCards.category,
+        country: giftCards.country,
+        countryCode: giftCards.countryCode,
+        currency: giftCards.currency,
         image: giftCards.image,
         denominations: giftCards.denominations,
         active: giftCards.active,
@@ -91,12 +100,18 @@ export async function getAllGiftCards(searchParams: { [key: string]: string | st
       .orderBy(giftCards.brand)
       .limit(100); // Limit for faster query
 
-    return results.map((card) => ({
-      ...card,
-      _id: card.id.toString(),
-      category: card.category ?? undefined,
-      denominations: JSON.parse(card.denominations),
-    }));
+    return results
+      .map((card) => {
+        const raw = JSON.parse(card.denominations);
+        const { options } = standardizeDenominations(raw);
+        return {
+          ...card,
+          _id: card.id.toString(),
+          category: card.category ?? undefined,
+          denominations: options,
+        };
+      })
+      .filter((c) => Array.isArray(c.denominations) && c.denominations.length > 0);
   } catch (error) {
     console.error("Error fetching gift cards:", error);
     return [];
@@ -104,7 +119,7 @@ export async function getAllGiftCards(searchParams: { [key: string]: string | st
 }
 
 // Get gift card by brand slug - FAST VERSION
-export async function getGiftCardByBrand(brandSlug: string) {
+export async function getGiftCardByBrand(brandSlug: string, countryCode?: string) {
   const normalizedSlug = brandSlug
     .toLowerCase()
     .trim()
@@ -112,14 +127,19 @@ export async function getGiftCardByBrand(brandSlug: string) {
     .replace(/(^-|-$)+/g, "");
 
   try {
-    // FASTEST: Direct query with limit 1
+    // Filter by active and optional country to avoid cross-country mismatch
+    const conditions = [eq(giftCards.active, true)];
+    if (countryCode) {
+      conditions.push(eq(giftCards.countryCode, countryCode));
+    }
+
     const results = await db
       .select()
       .from(giftCards)
-      .where(eq(giftCards.active, true))
-      .limit(50); // Get small set, match in memory
+      .where(sql`${sql.join(conditions, sql` AND `)}`)
+      .limit(100);
 
-    // Find exact match
+    // Find exact brand match among filtered results
     const matchedCard = results.find((card) => {
       const cardSlug = card.brand
         .toLowerCase()
@@ -133,11 +153,16 @@ export async function getGiftCardByBrand(brandSlug: string) {
       return null;
     }
 
+    const raw = JSON.parse(matchedCard.denominations);
+    const { options } = standardizeDenominations(raw);
     return {
       ...matchedCard,
       _id: matchedCard.id.toString(),
       category: matchedCard.category ?? undefined,
-      denominations: JSON.parse(matchedCard.denominations),
+      country: matchedCard.country,
+      countryCode: matchedCard.countryCode,
+      currency: matchedCard.currency,
+      denominations: options,
       reloadlyProductId: matchedCard.reloadlyProductId,
     };
   } catch (error) {
@@ -161,11 +186,16 @@ export async function getGiftCardById(id: string) {
     if (results.length === 0) return null;
     
     const card = results[0];
+    const raw = JSON.parse(card.denominations);
+    const { options } = standardizeDenominations(raw);
     return {
       ...card,
       _id: card.id.toString(),
       category: card.category ?? undefined,
-      denominations: JSON.parse(card.denominations),
+      country: card.country,
+      countryCode: card.countryCode,
+      currency: card.currency,
+      denominations: options,
       reloadlyProductId: card.reloadlyProductId,
     };
   } catch (error) {
@@ -175,11 +205,14 @@ export async function getGiftCardById(id: string) {
 }
 
 // Get related gift cards
-export async function getRelatedGiftCards(category: string | undefined, currentId: string, limit: number = 4) {
+export async function getRelatedGiftCards(category: string | undefined, currentId: string, limit: number = 4, countryCode?: string) {
   try {
     const conditions = [eq(giftCards.active, true)];
     if (category) {
       conditions.push(eq(giftCards.category, category));
+    }
+    if (countryCode) {
+      conditions.push(eq(giftCards.countryCode, countryCode));
     }
     
     const results = await db
@@ -188,13 +221,22 @@ export async function getRelatedGiftCards(category: string | undefined, currentI
       .where(sql`${sql.join(conditions, sql` AND `)} AND ${giftCards.id}::text != ${currentId}`)
       .limit(limit);
 
-    return results.map((card) => ({
-      ...card,
-      _id: card.id.toString(),
-      category: card.category ?? undefined,
-      denominations: JSON.parse(card.denominations),
-      reloadlyProductId: card.reloadlyProductId,
-    }));
+    return results
+      .map((card) => {
+        const raw = JSON.parse(card.denominations);
+        const { options } = standardizeDenominations(raw);
+        return {
+          ...card,
+          _id: card.id.toString(),
+          category: card.category ?? undefined,
+          country: card.country,
+          countryCode: card.countryCode,
+          currency: card.currency,
+          denominations: options,
+          reloadlyProductId: card.reloadlyProductId,
+        };
+      })
+      .filter((c) => Array.isArray(c.denominations) && c.denominations.length > 0);
   } catch (error) {
     console.error("Error fetching related gift cards:", error);
     return [];

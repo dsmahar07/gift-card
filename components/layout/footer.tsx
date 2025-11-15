@@ -93,16 +93,16 @@ export function Footer() {
                 </a>
               </li>
               <li>
-                <a href="#" className="text-sm text-gray-400 hover:text-purple-400 transition-colors flex items-center gap-3">
+                <Link href="/terms" className="text-sm text-gray-400 hover:text-purple-400 transition-colors flex items-center gap-3">
                   <HugeIcon icon={LegalDocumentIcon} size={16} className="text-purple-400" />
-                  Terms of Service
-                </a>
+                  Terms & Conditions
+                </Link>
               </li>
               <li>
-                <a href="#" className="text-sm text-gray-400 hover:text-purple-400 transition-colors flex items-center gap-3">
+                <Link href="/privacy" className="text-sm text-gray-400 hover:text-purple-400 transition-colors flex items-center gap-3">
                   <HugeIcon icon={FileSecurityIcon} size={16} className="text-purple-400" />
                   Privacy Policy
-                </a>
+                </Link>
               </li>
             </ul>
           </div>
@@ -135,8 +135,8 @@ export function Footer() {
               &copy; {new Date().getFullYear()} {SITE_CONFIG.name}. All rights reserved.
             </p>
             <div className="flex items-center flex-wrap justify-center gap-4 sm:gap-6 text-xs text-gray-500">
-              <a href="#" className="hover:text-purple-400 transition-colors">Terms</a>
-              <a href="#" className="hover:text-purple-400 transition-colors">Privacy</a>
+              <Link href="/terms" className="hover:text-purple-400 transition-colors">Terms</Link>
+              <Link href="/privacy" className="hover:text-purple-400 transition-colors">Privacy</Link>
               <a href="#" className="hover:text-purple-400 transition-colors">Cookies</a>
               <a href="#" className="hover:text-purple-400 transition-colors">Legal</a>
             </div>

@@ -4,6 +4,9 @@ export interface GiftCard {
   name: string;
   image: string;
   category?: string;
+  country: string;
+  countryCode: string;
+  currency: string;
   denominations: number[];
   reloadlyProductId: number;
   active: boolean;
