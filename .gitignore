@@ -37,3 +37,6 @@ next-env.d.ts
 drizzle/
 
 .vercel
+
+# clerk configuration (can include secrets)
+/.clerk/

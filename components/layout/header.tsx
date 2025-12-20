@@ -89,7 +89,7 @@ export function Header({ categories = [], brands = [] }: HeaderProps) {
 
   return (
     <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-lg border-b">
-      <div className="container mx-auto px-3 sm:px-4 lg:px-6 py-2 sm:py-3">
+      <div className="container mx-auto px-3 sm:px-4 lg:px-6 py-1.5 sm:py-2">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           {/* Top Row: Logo and Navigation */}
           <div className="flex items-center justify-between">

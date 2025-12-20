@@ -13,7 +13,8 @@ A full-featured gift card marketplace where users can purchase gift cards from t
 
 ## Tech Stack
 
-- **Frontend**: Next.js 14 (App Router), React, TypeScript
+- **Runtime**: Bun
+- **Frontend**: Next.js 16 (App Router), React 19, TypeScript
 - **Backend**: Next.js API Routes
 - **Database**: Neon PostgreSQL with Drizzle ORM
 - **Authentication**: Clerk
@@ -24,7 +25,7 @@ A full-featured gift card marketplace where users can purchase gift cards from t
 
 ## Prerequisites
 
-- Node.js 18+ and npm
+- [Bun](https://bun.sh) (v1.0+)
 - Neon PostgreSQL database account
 - Clerk account for authentication
 - NOWPayments account
@@ -36,7 +37,7 @@ A full-featured gift card marketplace where users can purchase gift cards from t
 ### 1. Clone and Install
 
 ```bash
-npm install
+bun install
 ```
 
 ### 2. Environment Variables
@@ -76,7 +77,7 @@ Run the migration to create the database tables:
 
 ```bash
 # Option 1: Using Drizzle Kit
-npx drizzle-kit push
+bun run db:push
 
 # Option 2: Run the SQL migration manually
 # Connect to your Neon database and run db/migrations/0000_init.sql
@@ -118,7 +119,7 @@ npx drizzle-kit push
 ### 8. Run the Development Server
 
 ```bash
-npm run dev
+bun run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) in your browser.
@@ -181,13 +182,13 @@ Access at `/admin` (requires admin role in Clerk):
 
 ```bash
 # Generate migration
-npx drizzle-kit generate
+bun run db:generate
 
 # Push changes to database
-npx drizzle-kit push
+bun run db:push
 
 # View database in Drizzle Studio
-npx drizzle-kit studio
+bun run db:studio
 ```
 
 ### Adding Gift Cards

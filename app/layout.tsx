@@ -9,6 +9,9 @@ import { SolanaWalletProvider } from "@/components/providers/wallet-provider";
 import { SITE_CONFIG } from "@/lib/constants";
 import "./globals.css";
 
+// Force dynamic rendering for all pages - required for auth and database
+export const dynamic = "force-dynamic";
+
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -75,30 +78,30 @@ export default async function RootLayout({
         },
       }}
     >
-    <html lang="en" suppressHydrationWarning>
-      <head>
-        {/* Preconnect to Clerk for faster auth */}
-        <link rel="preconnect" href="https://clerk.com" />
-        <link rel="dns-prefetch" href="https://clerk.com" />
-      </head>
-      <body
+      <html lang="en" suppressHydrationWarning>
+        <head>
+          {/* Preconnect to Clerk for faster auth */}
+          <link rel="preconnect" href="https://clerk.com" />
+          <link rel="dns-prefetch" href="https://clerk.com" />
+        </head>
+        <body
           className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col min-h-screen bg-[#f5f5f5]`}
           suppressHydrationWarning
-      >
-         <SolanaWalletProvider>
-          <Suspense fallback={
-            <div className="sticky top-0 z-50 bg-white/95 backdrop-blur-lg border-b">
-              <div className="container mx-auto px-3 sm:px-4 lg:px-6 py-2 sm:py-3 h-14" />
-            </div>
-          }>
-            <SimpleHeader />
-          </Suspense>
-          <main className="flex-1">{children}</main>
-          <Footer />
-          <Toaster />
-         </SolanaWalletProvider>
-      </body>
-    </html>
+        >
+          <SolanaWalletProvider>
+            <Suspense fallback={
+              <div className="sticky top-0 z-50 bg-white/95 backdrop-blur-lg border-b">
+                <div className="container mx-auto px-3 sm:px-4 lg:px-6 py-2 sm:py-3 h-14" />
+              </div>
+            }>
+              <SimpleHeader />
+            </Suspense>
+            <main className="flex-1">{children}</main>
+            <Footer />
+            <Toaster />
+          </SolanaWalletProvider>
+        </body>
+      </html>
     </ClerkProvider>
   );
 }
